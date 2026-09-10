@@ -818,7 +818,11 @@ public class FileUtil {
             return "";
         }
         if (!f.canRead()) {
-            Toast.show(f.getName() + "没有读取权限！", true);
+            try {
+                Toast.show(f.getName() + "没有读取权限！", true);
+            } catch (Throwable t) {
+                // LSPosed 未注入时（独立 APP 模式）XposedModule 不可用，忽略 Toast 报错
+            }
             return "";
         }
         StringBuilder result = new StringBuilder();
@@ -843,7 +847,7 @@ public class FileUtil {
     public static boolean write2File(String s, File f) {
         if (f.exists()) {
             if (!f.canWrite()) {
-                Toast.show(f.getAbsoluteFile() + "没有写入权限！", true);
+                try { Toast.show(f.getAbsoluteFile() + "没有写入权限！", true); } catch (Throwable t) { }
                 return false;
             }
             if (f.isDirectory()) {
@@ -897,7 +901,7 @@ public class FileUtil {
     
     public static boolean append2File(String s, File f) {
         if (f.exists() && !f.canWrite()) {
-            Toast.show(f.getAbsoluteFile() + "没有写入权限！", true);
+            try { Toast.show(f.getAbsoluteFile() + "没有写入权限！", true); } catch (Throwable t) { }
             return false;
         }
         boolean success = false;
