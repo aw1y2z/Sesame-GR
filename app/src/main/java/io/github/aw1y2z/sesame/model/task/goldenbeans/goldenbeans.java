@@ -105,7 +105,7 @@ public class goldenbeans extends ModelTask {
             }
 
             if (Status.hasFlagToday(FLAG_TASKS_DONE)) {
-                Log.record("金豆夺宝✅今日已处理#本轮跳过");
+                Log.record("金豆夺宝⏸️今日任务已全部处理#本轮跳过");
                 return;
             }
 
@@ -150,10 +150,8 @@ public class goldenbeans extends ModelTask {
 
             if (taskResolved && gameResolved) {
                 Status.flagToday(FLAG_TASKS_DONE);
-                Log.goldenBeans("金豆夺宝✅今日任务已全部处理");
-            } else {
-                Log.goldenBeans("金豆夺宝⏳仍有待完成或待领取任务");
             }
+            Log.record("金豆夺宝" + (taskResolved && gameResolved ? "✅今日任务已全部处理" : "⏳仍有待完成或待领取任务"));
         } catch (Throwable th) {
             Log.i(GoldenBeansSupport.TAG, "run err:");
             Log.printStackTrace(GoldenBeansSupport.TAG, th);

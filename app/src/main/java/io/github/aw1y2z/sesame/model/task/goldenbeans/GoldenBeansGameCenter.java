@@ -64,7 +64,7 @@ public final class GoldenBeansGameCenter {
                         }
                     }
                     if (afterQuota >= quotaCanUse && afterUsed <= usedQuota) {
-                        Log.goldenBeans("金豆乐园⚠️抽奖未确认#次数[" + usedQuota + "→" + afterUsed + "]");
+                        Log.record("金豆乐园⚠️抽奖未确认#次数[" + usedQuota + "→" + afterUsed + "]");
                         return false;
                     }
                     Log.goldenBeans("金豆乐园🎰抽奖[第" + afterUsed + "/" + quotaLimit + "次]"
@@ -90,9 +90,9 @@ public final class GoldenBeansGameCenter {
 
                 if (candidate == null) {
                     if (quotaLimit > 0 && usedQuota >= quotaLimit) {
-                        Log.goldenBeans("金豆乐园🎰今日次数已用尽[" + usedQuota + "/" + quotaLimit + "]");
+                        Log.record("金豆乐园🎰今日次数已用尽[" + usedQuota + "/" + quotaLimit + "]");
                     } else {
-                        Log.goldenBeans("金豆乐园🎰无可自动推进项#次数[" + usedQuota + "/" + quotaLimit + "]");
+                        Log.record("金豆乐园🎰无可自动推进项#次数[" + usedQuota + "/" + quotaLimit + "]");
                     }
                     return true;
                 }
@@ -107,7 +107,7 @@ public final class GoldenBeansGameCenter {
                 GoldenBeansSupport.pause(interval);
                 int successes = gameTask.reportSync("金豆乐园:" + gameTask.getTitle(), remaining);
                 if (successes <= 0) {
-                    Log.goldenBeans("金豆乐园⚠️[" + gameTask.getTitle() + "]上报失败");
+                    Log.record("金豆乐园⚠️[" + gameTask.getTitle() + "]上报失败");
                     return false;
                 }
 
@@ -132,10 +132,10 @@ public final class GoldenBeansGameCenter {
                     continue;
                 }
                 Status.flagToday(skipFlag(candidate));
-                Log.goldenBeans("金豆乐园⚠️[" + gameTask.getTitle() + "]状态未推进#今日不再尝试");
+                Log.record("金豆乐园⚠️[" + gameTask.getTitle() + "]状态未推进#今日不再尝试");
                 return false;
             }
-            Log.goldenBeans("金豆乐园⚠️达到收敛轮次上限[" + MAX_ROUND + "]");
+            Log.record("金豆乐园⚠️达到收敛轮次上限[" + MAX_ROUND + "]");
             return false;
         } catch (Throwable th) {
             Log.i(GoldenBeansSupport.TAG, "runGameCenterFlow err:");

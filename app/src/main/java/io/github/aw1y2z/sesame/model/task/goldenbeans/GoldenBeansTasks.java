@@ -230,7 +230,7 @@ public final class GoldenBeansTasks {
                         GoldenBeansSupport.pause(interval);
                         claimAward(entry, taskId, taskName);
                     } else {
-                        Log.goldenBeans("金豆[" + entry.alias + "]任务⏭️[" + taskName + "]黑名单跳过");
+                        Log.record("金豆[" + entry.alias + "]任务⏭️[" + taskName + "]黑名单跳过");
                     }
                     continue;
                 }
@@ -253,11 +253,11 @@ public final class GoldenBeansTasks {
 
                 if (STATUS_TODO.equals(taskStatus)) {
                     if (isPayTask(taskId)) {
-                        Log.goldenBeans("金豆[" + entry.alias + "]任务⏭️[" + taskName + "]需真实付款#跳过");
+                        Log.record("金豆[" + entry.alias + "]任务⏭️[" + taskName + "]需真实付款#跳过");
                         continue;
                     }
                     if (goldenbeansRpcCall.TASK_TYPE_EXCHANGE.equals(taskId)) {
-                        Log.goldenBeans("金豆[" + entry.alias + "]任务⏭️[" + taskName + "]"
+                        Log.record("金豆[" + entry.alias + "]任务⏭️[" + taskName + "]"
                                 + (entry == GoldenBeansEntry.ALCHEMY ? "芝麻粒换豆处理" : "肥料换豆处理"));
                         continue;
                     }
@@ -266,18 +266,18 @@ public final class GoldenBeansTasks {
                         handled++;
                         changed = true;
                     } else {
-                        Log.goldenBeans("金豆[" + entry.alias + "]任务⚠️[" + taskName + "]完成失败["
+                        Log.record("金豆[" + entry.alias + "]任务⚠️[" + taskName + "]完成失败["
                                 + (actionType.isEmpty() ? "UNKNOWN" : actionType) + "]");
                         unresolved = true;
                     }
                     continue;
                 }
 
-                Log.goldenBeans("金豆[" + entry.alias + "]任务⚠️[" + taskName + "]未知状态[" + taskStatus + "]");
+                Log.record("金豆[" + entry.alias + "]任务⚠️[" + taskName + "]未知状态[" + taskStatus + "]");
                 unresolved = true;
             }
 
-            Log.goldenBeans("金豆[" + entry.alias + "]任务🗂️共[" + total + "]个#完成[" + handled + "]个");
+            Log.record("金豆[" + entry.alias + "]任务🗂️共[" + total + "]个#完成[" + handled + "]个");
             if (changed) {
                 GoldenBeansSupport.pause(interval);
                 goldenbeansRpcCall.pullOf(entry.bizType, entry.source, "FARM_TASK", "TASK_LIST");

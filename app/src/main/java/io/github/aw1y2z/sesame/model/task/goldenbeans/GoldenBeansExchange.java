@@ -16,8 +16,8 @@ import io.github.aw1y2z.sesame.util.Status;
  */
 public final class GoldenBeansExchange {
 
-    /** 当日肥料换豆已消耗的肥料数 */
-    private static final String FLAG_MANURE_AMOUNT = "goldenBeans::manureExchangeAmount";
+    /** 当日肥料换豆已获得的金豆数（与芝麻粒路径语义对齐；农场入口费:豆=1:1） */
+    private static final String FLAG_MANURE_AMOUNT = "goldenBeans::manureExchangeBeanAmount";
     /** 当日芝麻粒换豆已获得的金豆数 */
     private static final String FLAG_SESAME_BEAN_AMOUNT = "goldenBeans::sesameExchangeBeanAmount";
 
@@ -48,28 +48,33 @@ public final class GoldenBeansExchange {
             int effectiveExchangeManure = info.optInt("effectiveExchangeManure", 0);
             int minExchangeAmount = info.optInt("minExchangeAmount", 0);
             int remainQuota = info.optInt("remainQuota", 0);
+            // 农场入口费:豆汇率，当前为1:1；显式乘入与芝麻粒路径保持一致
+            int beanReward = info.optInt("beanReward", 1);
 
             if (!farmOpened || !pageOpened || !taobaoBinding) {
-                Log.goldenBeans("金豆换豆⚠️资格未满足#跳过");
+                Log.record("金豆换豆⚠️资格未满足#跳过");
                 return;
             }
             if (minExchangeAmount <= 0) {
-                Log.goldenBeans("金豆换豆⚠️最低兑换量无效#跳过");
+                Log.record("金豆换豆⚠️最低兑换量无效#跳过");
                 return;
             }
 
             int exchangedToday = Status.getIntFlagToday(FLAG_MANURE_AMOUNT);
-            // 服务端可兑换额度：当前肥料 / 有效可兑换量 / 剩余额度 三者最小值，再按用户上限收敛
-            int serverLimit = Math.min(currentManure, Math.min(effectiveExchangeManure, remainQuota));
-            int userRemaining = dailyLimit > 0
-                    ? Math.max(dailyLimit - exchangedToday, 0) : Integer.MAX_VALUE;
-            int reserved = Math.min(serverLimit, userRemaining);
+            // 服务端可兑换金豆：(当前肥料 / 有效可兑换量) × beanReward / 剩余额度 三者最小值，再按用户上限收敛
+            // beanReward=1(1:1)，此处显式乘入以与芝麻粒路径对齐，后续汇率变化时无需改调用方
+            long serverLimitLong = Math.min((long) remainQuota,
+                    Math.min((long) currentManure * beanReward, (long) effectiveExchangeManure * beanReward));
+            long userRemaining = dailyLimit > 0
+                    ? (long) Math.max(dailyLimit - exchangedToday, 0) : Long.MAX_VALUE;
+            long availableLong = Math.max(Math.min(serverLimitLong, userRemaining), 0);
+            int reserved = (int) Math.min(availableLong, Integer.MAX_VALUE);
             if (reserved <= 0) {
-                Log.goldenBeans("金豆换豆⏸️可兑换额度不足#跳过");
+                Log.record("金豆换豆⏸️可兑换额度不足#跳过");
                 return;
             }
             if (reserved < minExchangeAmount) {
-                Log.goldenBeans("金豆换豆⏸️可兑换[" + reserved + "]低于服务端最低["
+                Log.record("金豆换豆⏸️可兑换[" + reserved + "]低于服务端最低["
                         + minExchangeAmount + "]#本轮不换");
                 return;
             }
@@ -80,9 +85,14 @@ public final class GoldenBeansExchange {
                 Log.goldenBeans("金豆换豆⚠️失败[" + GoldenBeansSupport.describe(exchangeResponse) + "]");
                 return;
             }
-            Log.goldenBeans("金豆换豆🌱消耗[" + reserved + "肥料]"
-                    + GoldenBeansSupport.awardText(exchangeResponse));
-            Status.setIntFlagToday(FLAG_MANURE_AMOUNT, exchangedToday + reserved);
+            int beanDelta = exchangeResponse.optInt("beanDelta", 0);
+            if (beanDelta <= 0) {
+                Log.goldenBeans("金豆换豆⚠️响应缺少有效beanDelta#不记录额度");
+                return;
+            }
+            Log.goldenBeans("金豆换豆🌱请求[" + reserved + "豆]消耗["
+                    + exchangeResponse.optInt("manureCost", -1) + "肥料]#获得[" + beanDelta + "豆]");
+            Status.setIntFlagToday(FLAG_MANURE_AMOUNT, exchangedToday + beanDelta);
             GoldenBeansSupport.pause(interval);
             goldenbeansRpcCall.pull("JAR_INFO", "EXCHANGE_MANURE", "TASK_LIST");
         } catch (Throwable th) {
@@ -131,11 +141,11 @@ public final class GoldenBeansExchange {
                     + "]今日已换[" + exchangedToday + "]可兑换[" + available + "]");
 
             if (!pageOpened || beanReward <= 0 || minExchangeAmount <= 0) {
-                Log.goldenBeans("金豆芝麻粒换豆⏸️服务端资格未满足#跳过");
+                Log.record("金豆芝麻粒换豆⏸️服务端资格未满足#跳过");
                 return;
             }
             if (available < minExchangeAmount) {
-                Log.goldenBeans("金豆芝麻粒换豆⏸️可兑换[" + available + "]低于服务端最低["
+                Log.record("金豆芝麻粒换豆⏸️可兑换[" + available + "]低于服务端最低["
                         + minExchangeAmount + "]#本轮不换");
                 return;
             }

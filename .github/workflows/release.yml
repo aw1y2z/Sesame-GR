@@ -90,13 +90,11 @@ jobs:
           append_body: true
           generate_release_notes: true
           body: |
-            ## ✨What's Changed
-
-            ${{ github.event.head_commit.message || github.event.pull_request.title || '无详细信息' }}
+            
             > ## 下载说明
               * 按 ABI 拆分,请选择对应版本:
                 - `arm64-v8a`:64 位设备(绝大多数现代手机)
                 - `armeabi-v7a`:32 位旧设备
-                - `universal`:全架构兜底包,无法确定架构时使用
+                - `universal`:全架构包,无法确定架构时使用
               * 要求`Android 8.0`(API 26)及以上系统
-            > 倒卖必死全家
+            > 本 APP 是为了学习研究用,请于 24 小时内卸载本 APP。
