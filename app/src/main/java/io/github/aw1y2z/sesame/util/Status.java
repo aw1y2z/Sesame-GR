@@ -53,6 +53,12 @@ public class Status {
     // other
     private final Set<String> flagLogList = new HashSet<>();
     
+    /**
+     * 当日整型标记：tag -> 累计值（如金豆夺宝芝麻粒换豆当日已兑换金豆数）。
+     * <p>随 status.json 的每日重置自动清空（updateDay -> unload -> new Status()）。
+     */
+    private final Map<String, Integer> intFlagLogList = new HashMap<>();
+    
     // 保存时间
     private Long saveTime = 0L;
     
@@ -65,6 +71,11 @@ public class Status {
      * 绿色经营，评级领奖已完成用户
      */
     private final Set<Integer> greenFinancePrizesSet = new HashSet<>();
+
+    /**
+     * 金豆，已领取奖励的任务ID
+     */
+    private final Set<String> goldenBeansTaskReceivedSet = new HashSet<>();
     
     public static Boolean hasFlagToday(String tag) {
         return INSTANCE.flagLogList.contains(tag);
@@ -85,6 +96,22 @@ public class Status {
                 save();
             }
         }
+    }
+    
+    /**
+     * 读取当日整型标记（不存在时返回 0）
+     */
+    public static int getIntFlagToday(String tag) {
+        Integer value = INSTANCE.intFlagLogList.get(tag);
+        return value == null ? 0 : value;
+    }
+    
+    /**
+     * 写入当日整型标记（用于累计类额度，如芝麻粒换豆当日已兑换金豆数）
+     */
+    public static void setIntFlagToday(String tag, int value) {
+        INSTANCE.intFlagLogList.put(tag, value);
+        save();
     }
     
     // 清除单个指定Flag
@@ -638,6 +665,24 @@ public class Status {
         Status stat = INSTANCE;
         if (!stat.greenFinancePrizesSet.contains(week)) {
             stat.greenFinancePrizesSet.add(week);
+            save();
+        }
+    }
+
+    /**
+     * 金豆-是否已领取任务奖励
+     */
+    public static boolean canGoldenBeansTaskReceive(String taskId) {
+        return !INSTANCE.goldenBeansTaskReceivedSet.contains(taskId);
+    }
+
+    /**
+     * 金豆-任务奖励已领取
+     */
+    public static void goldenBeansTaskReceived(String taskId) {
+        Status stat = INSTANCE;
+        if (!stat.goldenBeansTaskReceivedSet.contains(taskId)) {
+            stat.goldenBeansTaskReceivedSet.add(taskId);
             save();
         }
     }

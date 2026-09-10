@@ -44,6 +44,29 @@ public enum GameTask {
     private String cachedToken; // 缓存登录Token
 
     /**
+     * 根据小程序 appId 匹配游戏任务（金豆乐园游戏权益上报使用）
+     */
+    public static GameTask matchAppId(String appId) {
+        if (appId == null || appId.isEmpty()) {
+            return null;
+        }
+        for (GameTask task : values()) {
+            if (appId.equals(task.appId)) {
+                return task;
+            }
+        }
+        return null;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    /**
      * 枚举构造方法
      */
     GameTask(String title, String appId, String gid, String action, String channel, String version, int requestsPerEgg) {
@@ -155,6 +178,43 @@ public enum GameTask {
             }
             Log.record("任务流程🏁运行结束");
         }).start();
+    }
+
+    /**
+     * 同步执行上报任务，返回成功上报次数。
+     * 用于需要等待结果并回查服务端状态的场景（如金豆乐园游戏权益）。
+     *
+     * @param gameType 日志展示用的场景名
+     * @param eggCount 目标蛋数量
+     * @return 成功上报的次数，失败返回已成功的次数
+     */
+    public int reportSync(String gameType, int eggCount) {
+        if (eggCount <= 0) {
+            return 0;
+        }
+        int requiredSuccesses = eggCount * this.requestsPerEgg;
+        this.cachedToken = login();
+        if (this.cachedToken == null || this.cachedToken.isEmpty()) {
+            Log.error("无法获取⚠️有效的Token，放弃上报任务");
+            return 0;
+        }
+
+        int successfulReports = 0;
+        for (int i = 1; i <= requiredSuccesses; i++) {
+            if (!executeSingleReport(gameType, i, requiredSuccesses)) {
+                break;
+            }
+            successfulReports++;
+            if (i < requiredSuccesses) {
+                try {
+                    Thread.sleep(new Random().nextInt(2001) + 1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        return successfulReports;
     }
 
     /**

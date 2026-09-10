@@ -2,6 +2,7 @@ package io.github.aw1y2z.sesame.ui.miuix
 
 import android.content.Intent
 import android.os.Bundle
+import java.io.RandomAccessFile
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -52,6 +53,7 @@ import java.io.File
  */
 enum class LogType(val displayName: String) {
     FOREST("森林记录"),
+    GOLDENBEANS("金豆记录"),
     FARM("庄园记录"),
     OTHER("其他记录"),
     DEBUG("抓包记录"),
@@ -62,6 +64,7 @@ enum class LogType(val displayName: String) {
     val file: File
         get() = when (this) {
             FOREST -> FileUtil.getForestLogFile()
+            GOLDENBEANS -> FileUtil.getGoldenBeansLogFile()
             FARM -> FileUtil.getFarmLogFile()
             OTHER -> FileUtil.getOtherLogFile()
             DEBUG -> FileUtil.getDebugLogFile()
@@ -280,40 +283,75 @@ fun LogTopBar(
     }
 }
 
-/** 读取日志文件并按行解析为条目;无时间戳的行合并到上一条(多行日志聚合为同一卡片) */
+/** 日志查看时最多从文件尾部读取的字节数(避免大文件全量加载导致卡顿) */
+private const val MAX_TAIL_BYTES = 1024 * 1024L
+
+/** 日志查看时最多展示的条目数 */
+private const val MAX_LOG_ENTRIES = 500
+
+/**
+ * 从文件尾部读取文本,最多 maxBytes 字节。
+ * 若非从头读取,会丢弃首个可能被截断的行。
+ */
+private fun readTailText(file: File, maxBytes: Long): String {
+    val length = file.length()
+    if (length <= 0L) {
+        return ""
+    }
+    val start = maxOf(0L, length - maxBytes)
+    RandomAccessFile(file, "r").use { raf ->
+        raf.seek(start)
+        val bytes = ByteArray((length - start).toInt())
+        raf.readFully(bytes)
+        var text = String(bytes, Charsets.UTF_8)
+        if (start > 0L) {
+            val idx = text.indexOf('\n')
+            text = if (idx >= 0) text.substring(idx + 1) else ""
+        }
+        return text
+    }
+}
+
+/**
+ * 读取日志文件并按行解析为条目;无时间戳的行合并到上一条(多行日志聚合为同一卡片)。
+ * 仅读取文件尾部,并限制最大条目数,保证大文件也能快速打开。
+ */
 private fun loadLogEntries(file: File?): List<LogEntry> {
     if (file == null || !file.exists()) {
         return emptyList()
     }
     val timeRegex = Regex("^(\\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(\\w+):\\s*(.*)$")
-    val entries = mutableListOf<LogEntry>()
+    val entries = ArrayDeque<LogEntry>()
     return try {
-        file.useLines { lines ->
-            var lineNumber = 0
-            lines.forEach { line ->
-                lineNumber++
-                val match = timeRegex.find(line)
-                if (match != null) {
-                    entries.add(
-                        LogEntry(
-                            lineNumber = lineNumber,
-                            time = match.groupValues[1],
-                            tag = match.groupValues[2],
-                            body = match.groupValues[3]
-                        )
+        val text = readTailText(file, MAX_TAIL_BYTES)
+        var lineNumber = 0
+        for (line in text.lineSequence()) {
+            lineNumber++
+            val match = timeRegex.find(line)
+            if (match != null) {
+                entries.addLast(
+                    LogEntry(
+                        lineNumber = lineNumber,
+                        time = match.groupValues[1],
+                        tag = match.groupValues[2],
+                        body = match.groupValues[3]
                     )
+                )
+            } else {
+                // 无时间戳:视为上一条的续行,合并到同卡片
+                if (entries.isNotEmpty()) {
+                    val last = entries.removeLast()
+                    entries.addLast(last.copy(body = last.body + "\n" + line))
                 } else {
-                    // 无时间戳:视为上一条的续行,合并到同卡片
-                    if (entries.isNotEmpty()) {
-                        val last = entries.removeAt(entries.size - 1)
-                        entries.add(last.copy(body = last.body + "\n" + line))
-                    } else {
-                        entries.add(LogEntry(lineNumber, null, null, line))
-                    }
+                    entries.addLast(LogEntry(lineNumber, null, null, line))
                 }
             }
-            entries
+            // 超出上限时丢弃最早的条目,保证内存占用可控
+            while (entries.size > MAX_LOG_ENTRIES) {
+                entries.removeFirst()
+            }
         }
+        entries.toList()
     } catch (e: Throwable) {
         emptyList()
     }

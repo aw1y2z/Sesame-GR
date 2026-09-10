@@ -29,6 +29,7 @@ public class AppConfig {
     private Boolean followSystem = true;
 
     private Boolean enableForestLog = true;
+    private Boolean enableGoldenBeansLog = true;
     private Boolean enableFarmLog = true;
     private Boolean enableOtherLog = true;
     private Boolean enableDebugLog = false;
@@ -61,6 +62,9 @@ public class AppConfig {
 
     public Boolean getEnableForestLog() { return enableForestLog; }
     public void setEnableForestLog(Boolean value) { enableForestLog = value; }
+
+    public Boolean getEnableGoldenBeansLog() { return enableGoldenBeansLog; }
+    public void setEnableGoldenBeansLog(Boolean value) { enableGoldenBeansLog = value; }
 
     public Boolean getEnableFarmLog() { return enableFarmLog; }
     public void setEnableFarmLog(Boolean value) { enableFarmLog = value; }

@@ -13,6 +13,7 @@ public enum ModelGroup {
     , FARM("FARM", "庄园", "svg/group/farm.svg")
     , STALL("STALL", "新村", "svg/group/stall.svg")
     , ORCHARD("ORCHARD", "农场", "svg/group/orchard.svg")
+    , GOLDENBEANS("GOLDENBEANS", "金豆", "svg/group/goldenbeans.svg")
     , SPORTS("SPORTS", "运动", "svg/group/sports.svg")
     , MEMBER("MEMBER", "会员", "svg/group/member.svg")
     , OTHER("OTHER", "其他", "svg/group/other.svg")

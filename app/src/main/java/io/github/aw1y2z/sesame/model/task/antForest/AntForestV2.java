@@ -188,6 +188,7 @@ public class AntForestV2 extends ModelTask {
     private SelectModelField helpFriendCollectList;
 
     private IntegerModelField helpFriendCollectListLimit;
+    private BooleanModelField returnWater;
     private IntegerModelField returnWater33;
     private IntegerModelField returnWater18;
     private IntegerModelField returnWater10;
@@ -288,9 +289,10 @@ public class AntForestV2 extends ModelTask {
         //modelFields.addField(doubleCountLimit = new IntegerModelField("doubleCountLimit", "双击卡 | " + "使用次数", 6));
         //modelFields.addField(doubleCardTime = new ListModelField.ListJoinCommaToStringModelField("doubleCardTime", "双击卡 | 使用时间(范围)", ListUtil.newArrayList("0700" + "-0730")));
         //modelFields.addField(doubleCardConstant = new BooleanModelField("DoubleCardConstant", "双击卡 | 限时双击永动机", false));
-        modelFields.addField(returnWater10 = new IntegerModelField("returnWater10", "返水 | 10克需收能量" + "(关闭:0)", 0));
-        modelFields.addField(returnWater18 = new IntegerModelField("returnWater18", "返水 | 18克需收能量" + "(关闭:0)", 0));
-        modelFields.addField(returnWater33 = new IntegerModelField("returnWater33", "返水 | 33克需收能量" + "(关闭:0)", 0));
+        modelFields.addField(returnWater = new BooleanModelField("returnWater", "返水 | 开启", false));
+        modelFields.addField(returnWater10 = new IntegerModelField("returnWater10", "返水 | 10克需收能量(0不限)", 10));
+        modelFields.addField(returnWater18 = new IntegerModelField("returnWater18", "返水 | 18克需收能量(0不限)", 18));
+        modelFields.addField(returnWater33 = new IntegerModelField("returnWater33", "返水 | 33克需收能量(0不限)", 33));
         modelFields.addField(waterFriendType = new ChoiceModelField("waterFriendType", "浇水 | 动作", WaterFriendType.WATER_00, WaterFriendType.nickNames));
         modelFields.addField(waterFriendList = new SelectAndCountModelField("waterFriendList", "浇水 | 好友列表", new LinkedHashMap<>(), AlipayUser::getList, "请填写浇水次数(每日)"));
         modelFields.addField(waterFriendEnergySendChat = new BooleanModelField("waterFriendEnergySendChat", "浇水 | 发送已浇水提醒", false));
@@ -378,7 +380,6 @@ public class AntForestV2 extends ModelTask {
     @Override
     public void run() {
         try {
-            Log.record("执行开始-蚂蚁森林");
             NotificationUtil.setStatusTextExec();
             taskCount.set(0);
             selfId = UserIdMap.getCurrentUid();
@@ -699,9 +700,7 @@ public class AntForestV2 extends ModelTask {
                     }
                     if (count > 0) {
                         Log.record("执行超时-蚂蚁森林");
-                    } else if (count == 0) {
-                        Log.record("执行结束-蚂蚁森林");
-                    } else {
+                    } else if (count != 0) {
                         Log.record("执行完成-蚂蚁森林");
                     }
                 }
@@ -1472,16 +1471,18 @@ public class AntForestV2 extends ModelTask {
                     if (bizNo.isEmpty()) {
                         return;
                     }
-                    int returnCount = 0;
-                    if (returnWater33.getValue() > 0 && collected >= returnWater33.getValue()) {
-                        returnCount = 33;
-                    } else if (returnWater18.getValue() > 0 && collected >= returnWater18.getValue()) {
-                        returnCount = 18;
-                    } else if (returnWater10.getValue() > 0 && collected >= returnWater10.getValue()) {
-                        returnCount = 10;
-                    }
-                    if (returnCount > 0) {
-                        returnFriendWater(userId, bizNo, 1, returnCount);
+                    if (returnWater.getValue()) {
+                        int returnCount = 0;
+                        if (collected >= returnWater33.getValue()) {
+                            returnCount = 33;
+                        } else if (collected >= returnWater18.getValue()) {
+                            returnCount = 18;
+                        } else if (collected >= returnWater10.getValue()) {
+                            returnCount = 10;
+                        }
+                        if (returnCount > 0) {
+                            returnFriendWater(userId, bizNo, 1, returnCount);
+                        }
                     }
                 }
             } catch (Exception e) {

@@ -18,6 +18,7 @@ import io.github.aw1y2z.sesame.util.idMap.BeachIdMap;
 import io.github.aw1y2z.sesame.util.idMap.CooperationIdMap;
 import io.github.aw1y2z.sesame.util.idMap.FarmOrnamentsIdMap;
 import io.github.aw1y2z.sesame.util.idMap.GameCenterMallItemMap;
+import io.github.aw1y2z.sesame.util.idMap.GoldenBeansTaskListMap;
 import io.github.aw1y2z.sesame.util.idMap.MarathonIdMap;
 import io.github.aw1y2z.sesame.util.idMap.MemberBenefitIdMap;
 import io.github.aw1y2z.sesame.util.idMap.MemberCreditSesameTaskListMap;
@@ -73,6 +74,7 @@ public final class ConfigPreload {
         AntSportsTaskListMap.load();
         PathThemeMapListMap.load();
         AntMemberTaskListMap.load();
+        GoldenBeansTaskListMap.load();
         ConfigV2.load(userId);
     }
 

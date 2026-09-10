@@ -42,11 +42,18 @@ public abstract class ModelTask extends Model {
                 return;
             }
             MAIN_TASK_MAP.put(task, Thread.currentThread());
+            Log.record("执行开始-" + task.getName());
+            Log.startModuleLogCount();
             try {
                 task.run();
             } catch (Exception e) {
                 Log.printStackTrace(e);
             } finally {
+                // 本轮模块未产生任何动作时，在运行日志中给出提示
+                if (Log.stopModuleLogCount() == 0) {
+                    Log.record(task.getName() + "✅本轮无操作");
+                }
+                Log.record("执行结束-" + task.getName());
                 MAIN_TASK_MAP.remove(task);
             }
         }

@@ -241,6 +241,47 @@ public class MessageUtil {
                     }
                     break;
 
+                //金豆夺宝任务goldenbeans
+                case "GoldenBeansTaskList": {
+                    // 错误码依次取 code / resultCode / errorCode（不同接口字段不统一）
+                    String code = jo.optString("code", "").trim();
+                    if (code.isEmpty()) {
+                        code = jo.optString("resultCode", "").trim();
+                    }
+                    if (code.isEmpty()) {
+                        code = jo.optString("errorCode", "").trim();
+                    }
+                    // 错误文案依次取 desc / resultDesc / memo
+                    String message = jo.optString("desc", "");
+                    if (message.isEmpty()) {
+                        message = jo.optString("resultDesc", "");
+                    }
+                    if (message.isEmpty()) {
+                        message = jo.optString("memo", "");
+                    }
+                    // 可重试错误（限流、远端异常、网络抖动）不拉黑，避免临时故障把任务永久跳过
+                    boolean retryable = jo.optBoolean("retryable", false)
+                            || jo.optBoolean("retriable", false)
+                            || "3000".equals(code)
+                            || "REMOTE_INVOKE_EXCEPTION".equals(code);
+                    // 仅在“重试也不会有不同结果”时才拉黑：
+                    // 1) 任务Id非法、入参非法等不可恢复错误码；
+                    // 2) 服务端明确不支持 rpc 调用或任务全局配置不存在。
+                    boolean unsupported = code.contains("400000040");
+                    boolean invalid = code.contains("20020012")
+                            || code.contains("TASK_ID_INVALID")
+                            || code.contains("ILLEGAL_ARGUMENT");
+                    if (!retryable && (unsupported || invalid
+                            || message.contains("不支持rpc调用") || message.contains("不支持RPC调用")
+                            || message.contains("任务全局配置不存在"))) {
+                        canAddBlackList = true;
+                    }
+                    if (canAddBlackList) {
+                        MarkTaskBlackList("goldenbeans", listTitle, "金豆夺宝任务", taskTitle);
+                    }
+                    break;
+                }
+
                 //新村任务AntStall
                 case "AntStallTaskList":
                     if (canAddBlackList) {

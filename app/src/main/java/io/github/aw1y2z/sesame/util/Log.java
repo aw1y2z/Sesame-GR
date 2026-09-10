@@ -88,6 +88,14 @@ public class Log {
                     .flattener(new PatternFlattener("{d HH:mm:ss.SSS} {m}"))
                     .build()).build();
 
+    private static final Logger goldenBeansLogger = XLog.tag("GOLDENBEANS").printers(
+            new FilePrinter.Builder(FileUtil.LOG_DIRECTORY_FILE.getPath())
+                    .fileNameGenerator(new CustomDateFileNameGenerator("goldenbeans"))
+                    .backupStrategy(new NeverBackupStrategy())
+                    .cleanStrategy(new NeverCleanStrategy())
+                    .flattener(new PatternFlattener("{d HH:mm:ss.SSS} {m}"))
+                    .build()).build();
+
     private static final Logger farmLogger = XLog.tag("FARM").printers(
             new FilePrinter.Builder(FileUtil.LOG_DIRECTORY_FILE.getPath())
                     .fileNameGenerator(new CustomDateFileNameGenerator("farm"))
@@ -123,7 +131,37 @@ public class Log {
         i(tag + ", " + s);
     }
 
+    /**
+     * 当前任务线程的模块日志计数：用于判断某模块本轮是否产生了实际动作。
+     * 计数与各日志开关无关，开关关闭时同样计数。
+     */
+    private static final ThreadLocal<int[]> MODULE_LOG_COUNTER = new ThreadLocal<>();
+
+    /**
+     * 开始统计当前线程的模块日志条数（由 ModelTask 在模块 run() 前调用）
+     */
+    public static void startModuleLogCount() {
+        MODULE_LOG_COUNTER.set(new int[]{0});
+    }
+
+    /**
+     * 结束统计并返回当前线程的模块日志条数
+     */
+    public static int stopModuleLogCount() {
+        int[] counter = MODULE_LOG_COUNTER.get();
+        MODULE_LOG_COUNTER.remove();
+        return counter == null ? 0 : counter[0];
+    }
+
+    private static void countModuleLog() {
+        int[] counter = MODULE_LOG_COUNTER.get();
+        if (counter != null) {
+            counter[0]++;
+        }
+    }
+
     public static void record(String str) {
+        countModuleLog();
         // 记录日志(record)已停用,只按「查看运行日志」开关写入运行日志
         if (io.github.aw1y2z.sesame.data.AppConfig.INSTANCE.getEnableViewRuntimeLog()) {
             runtimeLogger.i(str);
@@ -140,6 +178,7 @@ public class Log {
     }
 
     public static void forest(String s) {
+        countModuleLog();
         if (!io.github.aw1y2z.sesame.data.AppConfig.INSTANCE.getEnableForestLog()) {
             return;
         }
@@ -147,7 +186,17 @@ public class Log {
         forestLogger.i(s);
     }
 
+    public static void goldenBeans(String s) {
+        countModuleLog();
+        if (!io.github.aw1y2z.sesame.data.AppConfig.INSTANCE.getEnableGoldenBeansLog()) {
+            return;
+        }
+        record(s);
+        goldenBeansLogger.i(s);
+    }
+
     public static void farm(String s) {
+        countModuleLog();
         if (!io.github.aw1y2z.sesame.data.AppConfig.INSTANCE.getEnableFarmLog()) {
             return;
         }
@@ -156,6 +205,7 @@ public class Log {
     }
 
     public static void other(String s) {
+        countModuleLog();
         if (!io.github.aw1y2z.sesame.data.AppConfig.INSTANCE.getEnableOtherLog()) {
             return;
         }

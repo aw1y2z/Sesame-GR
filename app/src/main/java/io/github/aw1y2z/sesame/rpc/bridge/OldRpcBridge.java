@@ -187,7 +187,7 @@ public class OldRpcBridge implements RpcBridge {
             } while (count < tryCount);
             return null;
         } finally {
-            Log.i("Old RPC\n方法: " + method + "\n参数: " + args + "\n数据: " + rpcEntity.getResponseString() + "\n");
+            Log.debug("Old RPC\n方法: " + method + "\n参数: " + args + "\n数据: " + rpcEntity.getResponseString() + "\n");
         }
     }
 
