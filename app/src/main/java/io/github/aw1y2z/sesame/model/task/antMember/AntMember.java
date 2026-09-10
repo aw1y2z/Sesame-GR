@@ -57,15 +57,12 @@ public class AntMember extends ModelTask {
     private BooleanModelField SesameGrowthBehavior;
     private BooleanModelField promise;
     private SelectModelField promiseList;
+    private BooleanModelField enableGameCenter;
+    private BooleanModelField enableGoldTicket;
     private BooleanModelField KuaiDiFuLiJia;
     private BooleanModelField antInsurance;
     private SelectModelField antInsuranceOptions;
-    private BooleanModelField signinCalendar;
-    private BooleanModelField enableGoldTicket;
-    private BooleanModelField enableGameCenter;
-    private BooleanModelField merchantSignIn;
-    private BooleanModelField merchantKMDK;
-    
+
     @Override
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
@@ -85,10 +82,7 @@ public class AntMember extends ModelTask {
         modelFields.addField(KuaiDiFuLiJia = new BooleanModelField("KuaiDiFuLiJia", "我的快递 | 福利加", false));
         //modelFields.addField(antInsurance = new BooleanModelField("antInsurance", "蚂蚁保 | 开启", false));
         //modelFields.addField(antInsuranceOptions = new SelectModelField("antInsuranceOptions", "蚂蚁保 | 选项", new LinkedHashSet<>(), CustomOption::getAntInsuranceOptions));
-        modelFields.addField(signinCalendar = new BooleanModelField("signinCalendar", "消费金 | 签到", false));
         modelFields.addField(enableGoldTicket = new BooleanModelField("enableGoldTicket", "黄金票 | 签到", false));
-        modelFields.addField(merchantSignIn = new BooleanModelField("merchantSignIn", "商家服务 | 签到", false));
-        modelFields.addField(merchantKMDK = new BooleanModelField("merchantKMDK", "商家服务 | 开门打卡", false));
         return modelFields;
     }
     
@@ -154,10 +148,6 @@ public class AntMember extends ModelTask {
             //if (antInsurance.getValue()) {
             //    AntInsurance.executeTask(antInsuranceOptions.getValue());
             //}
-            // 消费金签到
-            if (signinCalendar.getValue()) {
-                signinCalendar();
-            }
             if (enableGameCenter.getValue()) {
                 //检查并执行签到
                 checkAndDoSignIn();
@@ -167,16 +157,6 @@ public class AntMember extends ModelTask {
                 //查询玩乐豆小球列表，有则领取
                 queryPointBallList();
                 
-            }
-            if (merchantSignIn.getValue() || merchantKMDK.getValue()) {
-                if (MerchantService.transcodeCheck()) {
-                    if (merchantSignIn.getValue()) {
-                        MerchantService.taskListQueryV2();
-                    }
-                    if (merchantKMDK.getValue()) {
-                        MerchantService.merchantKMDK();
-                    }
-                }
             }
         }
         catch (Throwable t) {
@@ -1501,29 +1481,6 @@ public class AntMember extends ModelTask {
         catch (Throwable th) {
             Log.i(TAG, "OrdinaryTask err:");
             Log.printStackTrace(TAG, th);
-        }
-    }
-    
-    // 消费金签到
-    private void signinCalendar() {
-        try {
-            JSONObject jo = new JSONObject(AntMemberRpcCall.signinCalendar());
-            if (!MessageUtil.checkSuccess(TAG, jo)) {
-                return;
-            }
-            boolean signed = jo.optBoolean("isSignInToday");
-            if (!signed) {
-                jo = new JSONObject(AntMemberRpcCall.openBoxAward());
-                if (MessageUtil.checkSuccess(TAG, jo)) {
-                    int amount = jo.getInt("amount");
-                    int consecutiveSignInDays = jo.getInt("consecutiveSignInDays");
-                    Log.other("攒消费金💰签到[坚持" + consecutiveSignInDays + "天]#获得[" + amount + "消费金]");
-                }
-            }
-        }
-        catch (Throwable t) {
-            Log.i(TAG, "signinCalendar err:");
-            Log.printStackTrace(TAG, t);
         }
     }
 }

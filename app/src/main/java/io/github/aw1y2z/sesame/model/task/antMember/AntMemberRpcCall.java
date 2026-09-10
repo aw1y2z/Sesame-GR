@@ -439,16 +439,6 @@ public class AntMemberRpcCall {
         return ApplicationHook.requestString("alipay.promoprod.applet.trigger", args1);
     }
 
-    // 消费金签到
-    public static String signinCalendar() {
-        return ApplicationHook.requestString("alipay.mobile.ipsponsorprod.consume.gold.task.signin.calendar", "[{}]");
-    }
-
-    public static String openBoxAward() {
-        return ApplicationHook.requestString("alipay.mobile.ipsponsorprod.consume.gold.task.openBoxAward", "[{\"actionAwardDetails\":[{\"actionType\":\"date_sign_start\"}],\"bizType\":\"CONSUME_GOLD\",\"boxType\":\"CONSUME_GOLD_SIGN_DATE\",\"clientVersion\":\"6.3.0\",\"timeScaleType\":0," +
-                "\"userType\":\"new\"}]");
-    }
-
     /**
      * 芝麻签到 - 通用完成接口（芝麻粒/炼金等）
      * 对应: com.antgroup.zmxy.zmmemberop.biz.rpc.pointtask.CheckInTaskRpcManager.completeTask
